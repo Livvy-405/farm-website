@@ -2,17 +2,24 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Lock } from 'lucide-react';
+import { authAPI, setToken } from '@/lib/api';
 
 const DashboardLogin = ({ onLogin }: { onLogin: () => void }) => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === 'farmadmin') {
+    setLoading(true);
+    try {
+      const { token } = await authAPI.login(password);
+      setToken(token);
       onLogin();
-    } else {
+    } catch {
       setError(true);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -26,7 +33,9 @@ const DashboardLogin = ({ onLogin }: { onLogin: () => void }) => {
         </div>
         <Input type="password" placeholder="Password" value={password} onChange={(e) => { setPassword(e.target.value); setError(false); }} />
         {error && <p className="text-destructive text-sm">Incorrect password. Try again.</p>}
-        <Button type="submit" className="w-full">Sign In</Button>
+        <Button type="submit" className="w-full" disabled={loading}>
+          {loading ? 'Signing in...' : 'Sign In'}
+        </Button>
       </form>
     </div>
   );

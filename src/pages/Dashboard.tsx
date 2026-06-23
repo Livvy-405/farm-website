@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useStore } from '@/stores/useStore';
 import { LayoutDashboard, Package, ClipboardList, LogOut, Menu } from 'lucide-react';
 import DashboardLogin from '@/components/DashboardLogin';
@@ -18,12 +18,27 @@ const Dashboard = () => {
   const [loggedIn, setLoggedIn] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>('overview');
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const { fetchOrders, fetchProducts } = useStore();
+
+  useEffect(() => {
+    if (!loggedIn) return;
+
+    fetchOrders();
+    fetchProducts();
+
+    // Poll every 5 seconds for real-time updates
+    const interval = setInterval(() => {
+      fetchOrders();
+      fetchProducts();
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [loggedIn]);
 
   if (!loggedIn) return <DashboardLogin onLogin={() => setLoggedIn(true)} />;
 
   return (
     <div className="min-h-screen flex bg-background">
-      {/* Sidebar */}
       <aside className={`${sidebarOpen ? 'w-60' : 'w-0 md:w-16'} transition-all duration-300 border-r bg-sidebar flex flex-col overflow-hidden`}>
         <div className="h-16 flex items-center px-4 border-b gap-2">
           {sidebarOpen && <span className="font-display font-bold text-sm text-sidebar-foreground truncate">🌿 Farm Admin</span>}
@@ -48,7 +63,6 @@ const Dashboard = () => {
         </div>
       </aside>
 
-      {/* Main */}
       <main className="flex-1 flex flex-col min-w-0">
         <header className="h-16 flex items-center px-4 border-b gap-4">
           <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 hover:bg-muted rounded-lg"><Menu className="h-5 w-5" /></button>
